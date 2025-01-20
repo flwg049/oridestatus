@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orientation Ride Schedule Status</title>
+    <title>Scheduled Orientation Ride</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
             padding: 20px;
-            background-color: #ffffff;
+            background-color: #f9f9f9;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background-color: #fff;
+            background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -45,12 +45,26 @@
             color: red;
             font-weight: bold;
         }
+        .activity-planned {
+            color: blue;
+        }
+        .activity-in-progress {
+            color: orange;
+            font-weight: bold;
+        }
+        .activity-completed {
+            color: green;
+            font-weight: bold;
+        }
+        .activity-canceled {
+            color: red;
+            font-weight: bold;
+        }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyC_W6lDpTCW_oVlaVMlwGDQLB99FMvcx5s",
             authDomain: "o-ride-status.firebaseapp.com",
@@ -62,11 +76,9 @@
             measurementId: "G-6T92ZPMDJJ"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Load events from Firebase
         function loadEvents() {
             const eventRef = ref(database, "oridestatus");
             const tableBody = document.getElementById("statusTable");
@@ -74,7 +86,28 @@
                 const data = snapshot.val();
                 tableBody.innerHTML = ""; // Clear previous data
                 if (data) {
-                    Object.values(data).forEach((event) => {
+                    Object.entries(data).forEach(([key, event]) => {
+                        const today = new Date();
+                        const eventDate = new Date(event.date);
+
+                        // Automatically update activity status
+                        let updatedActivity = event.activity;
+                        if (event.activity !== "Canceled") {
+                            if (today < eventDate) {
+                                updatedActivity = "Planned";
+                            } else if (today.toDateString() === eventDate.toDateString()) {
+                                updatedActivity = "In Progress";
+                            } else if (today > eventDate) {
+                                updatedActivity = "Completed";
+                            }
+
+                            // Update the database if activity has changed
+                            if (updatedActivity !== event.activity) {
+                                const eventToUpdate = ref(database, `oridestatus/${key}`);
+                                update(eventToUpdate, { activity: updatedActivity });
+                            }
+                        }
+
                         const row = document.createElement("tr");
                         row.innerHTML = `
                             <td>${event.date}</td>
@@ -82,11 +115,14 @@
                             <td class="${event.recruitment === "Open" ? "status-open" : "status-closed"}">
                                 ${event.recruitment}
                             </td>
+                            <td class="activity-${updatedActivity.toLowerCase().replace(" ", "-")}">
+                                ${updatedActivity}
+                            </td>
                         `;
                         tableBody.appendChild(row);
                     });
                 } else {
-                    tableBody.innerHTML = "<tr><td colspan='3'>No events available</td></tr>";
+                    tableBody.innerHTML = "<tr><td colspan='4'>No events available</td></tr>";
                 }
             });
         }
@@ -97,17 +133,18 @@
 </head>
 <body>
     <div class="container">
-        <h1>Orientation Ride Schedule Status</h1>
+        <h1>Scheduled Orientation Ride</h1>
         <table>
             <thead>
                 <tr>
                     <th>Date</th>
                     <th>Location</th>
-                    <th>Slot Status</th>
+                    <th>Recruitment Status</th>
+                    <th>Activity Status</th>
                 </tr>
             </thead>
             <tbody id="statusTable">
-                <!-- 데이터가 실시간으로 추가됩니다 -->
+                <!-- Data will be dynamically loaded here -->
             </tbody>
         </table>
     </div>
