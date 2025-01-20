@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scheduled Orientation Ride</title>
+    <title>Ori Status Board</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -82,9 +82,13 @@
         function loadEvents() {
             const eventRef = ref(database, "oridestatus");
             const tableBody = document.getElementById("statusTable");
+
             onValue(eventRef, (snapshot) => {
                 const data = snapshot.val();
-                tableBody.innerHTML = ""; // Clear previous data
+
+                // Clear table before adding new rows
+                tableBody.innerHTML = "";
+
                 if (data) {
                     Object.entries(data).forEach(([key, event]) => {
                         const today = new Date();
@@ -101,7 +105,7 @@
                                 updatedActivity = "Completed";
                             }
 
-                            // Update the database if activity has changed
+                            // Update database if activity status changes
                             if (updatedActivity !== event.activity) {
                                 const eventToUpdate = ref(database, `oridestatus/${key}`);
                                 update(eventToUpdate, { activity: updatedActivity });
@@ -133,7 +137,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Scheduled Orientation Ride</h1>
+        <h1>Ori Status Board</h1>
         <table>
             <thead>
                 <tr>
