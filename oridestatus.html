@@ -131,6 +131,17 @@
             });
         }
 
+        function editEvent(key, updatedData) {
+            const eventRef = ref(database, `oridestatus/${key}`);
+            update(eventRef, updatedData)
+                .then(() => {
+                    console.log("Event successfully updated.");
+                })
+                .catch((error) => {
+                    console.error("Error updating event:", error);
+                });
+        }
+
         // Load events on page load
         window.onload = loadEvents;
     </script>
