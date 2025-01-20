@@ -117,6 +117,7 @@
         }
 
     </style>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
         import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
@@ -239,6 +240,24 @@
         window.deleteEvent = deleteEvent;
         window.onload = loadEvents;
     </script>
+
+    <script>
+        function sendHeightToParent() {
+            // 현재 페이지의 전체 높이 계산
+            const height = document.documentElement.scrollHeight || document.body.scrollHeight;
+    
+            // 부모 페이지로 높이 전달
+            window.parent.postMessage({ iframeHeight: height }, '*');
+        }
+    
+        // 페이지 로드 시 높이 전달
+        window.addEventListener('load', sendHeightToParent);
+    
+        // 콘텐츠 변경 시 높이 업데이트 (옵션)
+        const observer = new MutationObserver(sendHeightToParent);
+        observer.observe(document.body, { childList: true, subtree: true });
+    </script>
+    
 </head>
 <body>
     <h1>FL049 Orientation Ride Schedule Control Board</h1>
