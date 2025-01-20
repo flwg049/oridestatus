@@ -9,19 +9,32 @@
             font-family: Arial, sans-serif;
             margin: 20px;
             padding: 20px;
-            background-color: #f9f9f9;
+            background-color: #ffffff;
         }
         .container {
-            max-width: 900px;
-            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+        }
+        .form-container, .table-container {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+        .form-container {
+            flex: 1;
+            max-width: 250px;
+        }
+        .table-container {
+            flex: 2;
+            width: 100%;
+        }
         h1 {
             text-align: center;
             color: #333;
+        }
+        h2 {
+            color: #007bff;
         }
         table {
             width: 100%;
@@ -32,20 +45,26 @@
             padding: 10px;
             border: 1px solid #ddd;
             text-align: center;
+            vertical-align: top;
         }
         th {
             background-color: #007bff;
             color: white;
         }
         input, select {
-            padding: 10px;
+            padding: 8px;
             margin: 5px 0;
-            width: calc(100% - 20px);
+            width: 100%;
             border: 1px solid #ddd;
             border-radius: 5px;
-            font-size: 16px;
+            font-size: 13px;
+            box-sizing: border-box;
         }
-        .add-btn, .save-btn {
+        select {
+            background-color: #fff;
+            text-align: left;
+        }
+        .add-btn {
             padding: 10px 20px;
             margin-top: 10px;
             background-color: #28a745;
@@ -54,22 +73,49 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+            width: 100%;
         }
-        .add-btn:hover, .save-btn:hover {
+        .add-btn:hover {
             background-color: #218838;
         }
-        .delete-btn {
+        .save-btn, .delete-btn {
             padding: 5px 10px;
-            background-color: #dc3545;
-            color: white;
+            margin-top: 10px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
+            color: white;
+        }
+        .save-btn {
+            background-color: #28a745;
+        }
+        .save-btn:hover {
+            background-color: #218838;
+        }
+        .delete-btn {
+            background-color: #dc3545;
         }
         .delete-btn:hover {
             background-color: #c82333;
         }
+        select option {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 5px;
+        }
+        #eventTable td div[id^="activity-"] label {
+            display: flex;
+            align-items: center; /* 라디오 버튼과 텍스트를 한 줄로 수평 정렬 */
+            gap: 5px; /* 버튼과 텍스트 간격 조정 */
+            font-size: 12px; /* 텍스트 크기 설정 */
+            white-space: nowrap; /* 텍스트를 강제로 한 줄로 표시 */
+        }
+        #eventTable td label {
+            font-size: 12px; /* 텍스트 크기 설정 */
+        }
+
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
@@ -91,13 +137,13 @@
 
         function addEvent() {
             const date = document.getElementById("eventDate").value;
-            const startTime = document.getElementById("startTime").value;
-            const endTime = document.getElementById("endTime").value;
+            const startTime = document.getElementById("startTime").value || "TBD";
+            const endTime = document.getElementById("endTime").value || "TBD";
             const location = document.getElementById("eventLocation").value.trim();
             const recruitment = document.getElementById("recruitmentStatus").value;
             const activity = document.getElementById("activityStatus").value;
 
-            if (date && location && startTime && endTime) {
+            if (date && location) {
                 const eventRef = ref(database, "oridestatus");
                 push(eventRef, { date, startTime, endTime, location, recruitment, activity })
                     .then(() => {
@@ -108,7 +154,7 @@
                         alert("Failed to add event: " + error.message);
                     });
             } else {
-                alert("Please fill out all fields.");
+                alert("Please fill out all required fields.");
             }
         }
 
@@ -123,8 +169,20 @@
                         const row = document.createElement("tr");
                         row.innerHTML = `
                             <td><input type="date" value="${event.date}" id="date-${key}"></td>
-                            <td><input type="time" value="${event.startTime}" id="startTime-${key}"></td>
-                            <td><input type="time" value="${event.endTime}" id="endTime-${key}"></td>
+                            <td>
+                                <input type="time" value="${event.startTime === "TBD" ? "" : event.startTime}" id="startTime-${key}">
+                                <label>
+                                    <input type="checkbox" id="startTBD-${key}" ${event.startTime === "TBD" ? "checked" : ""}>
+                                    TBD
+                                </label>
+                            </td>
+                            <td>
+                                <input type="time" value="${event.endTime === "TBD" ? "" : event.endTime}" id="endTime-${key}">
+                                <label>
+                                    <input type="checkbox" id="endTBD-${key}" ${event.endTime === "TBD" ? "checked" : ""}>
+                                    TBD
+                                </label>
+                            </td>
                             <td><input type="text" value="${event.location}" id="location-${key}"></td>
                             <td>
                                 <select id="recruitment-${key}">
@@ -133,12 +191,12 @@
                                 </select>
                             </td>
                             <td>
-                                <select id="activity-${key}">
-                                    <option value="Planned" ${event.activity === "Planned" ? "selected" : ""}>Planned</option>
-                                    <option value="In Progress" ${event.activity === "In Progress" ? "selected" : ""}>In Progress</option>
-                                    <option value="Completed" ${event.activity === "Completed" ? "selected" : ""}>Completed</option>
-                                    <option value="Canceled" ${event.activity === "Canceled" ? "selected" : ""}>Canceled</option>
-                                </select>
+                                <div id="activity-${key}">
+                                    <label><input type="radio" name="activity-${key}" value="Planned" ${event.activity === "Planned" ? "checked" : ""}> Planned</label>
+                                    <label><input type="radio" name="activity-${key}" value="In Progress" ${event.activity === "In Progress" ? "checked" : ""}> In Progress</label>
+                                    <label><input type="radio" name="activity-${key}" value="Completed" ${event.activity === "Completed" ? "checked" : ""}> Completed</label>
+                                    <label><input type="radio" name="activity-${key}" value="Canceled" ${event.activity === "Canceled" ? "checked" : ""}> Canceled</label>
+                                </div>
                             </td>
                             <td>
                                 <button class="save-btn" onclick="saveEvent('${key}')">Save</button>
@@ -155,11 +213,11 @@
 
         function saveEvent(key) {
             const date = document.getElementById(`date-${key}`).value;
-            const startTime = document.getElementById(`startTime-${key}`).value;
-            const endTime = document.getElementById(`endTime-${key}`).value;
+            const startTime = document.getElementById(`startTBD-${key}`).checked ? "TBD" : document.getElementById(`startTime-${key}`).value;
+            const endTime = document.getElementById(`endTBD-${key}`).checked ? "TBD" : document.getElementById(`endTime-${key}`).value;
             const location = document.getElementById(`location-${key}`).value;
             const recruitment = document.getElementById(`recruitment-${key}`).value;
-            const activity = document.getElementById(`activity-${key}`).value;
+            const activity = document.querySelector(`input[name="activity-${key}"]:checked`).value;
 
             const eventRef = ref(database, `oridestatus/${key}`);
             update(eventRef, { date, startTime, endTime, location, recruitment, activity })
@@ -183,39 +241,45 @@
     </script>
 </head>
 <body>
+    <h1>FL049 Orientation Ride Schedule Control Board</h1>
     <div class="container">
-        <h1>Oride Admin - Control Board</h1>
-        <form id="addEventForm">
-            <input type="date" id="eventDate" required />
-            <input type="time" id="startTime" required />
-            <input type="time" id="endTime" required />
-            <input type="text" id="eventLocation" placeholder="Enter Location" required />
-            <select id="recruitmentStatus">
-                <option value="Open">Open</option>
-                <option value="Closed">Closed</option>
-            </select>
-            <select id="activityStatus">
-                <option value="Planned">Planned</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="Canceled">Canceled</option>
-            </select>
-            <button type="button" class="add-btn" onclick="addEvent()">Add Event</button>
-        </form>
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
-                    <th>Location</th>
-                    <th>Recruitment</th>
-                    <th>Activity</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="eventTable"></tbody>
-        </table>
+        <div class="form-container">
+            <h2>Add Event</h2>
+            <form id="addEventForm">
+                <input type="date" id="eventDate" required />
+                <input type="time" id="startTime" />
+                <input type="time" id="endTime" />
+                <input type="text" id="eventLocation" placeholder="Enter Location" required />
+                <select id="recruitmentStatus">
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                </select>
+                <select id="activityStatus">
+                    <option value="Planned">Planned</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Canceled">Canceled</option>
+                </select>
+                <button type="button" class="add-btn" onclick="addEvent()">Add Event</button>
+            </form>
+        </div>
+        <div class="table-container">
+            <h2>Manage Events</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Location</th>
+                        <th>Recruitment</th>
+                        <th>Activity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="eventTable"></tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>
