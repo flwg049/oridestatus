@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ori Status Board</title>
+    <title>Ormond Beach Composite Squadron Cadet Orientation Ride Schedule</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
             padding: 20px;
-            background-color: #f9f9f9;
+            background-color: #ffffff;
         }
         .container {
-            max-width: 900px;
+            max-width: 100%;
+            max-height: auto;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
@@ -47,6 +48,7 @@
         }
         .activity-planned {
             color: blue;
+            font-weight: bold;
         }
         .activity-in-progress {
             color: orange;
@@ -91,31 +93,16 @@
 
                 if (data) {
                     Object.entries(data).forEach(([key, event]) => {
-                        const today = new Date();
-                        const eventDate = new Date(event.date);
-
-                        // Automatically update activity status
-                        let updatedActivity = event.activity;
-                        if (event.activity !== "Canceled") {
-                            if (today < eventDate) {
-                                updatedActivity = "Planned";
-                            } else if (today.toDateString() === eventDate.toDateString()) {
-                                updatedActivity = "In Progress";
-                            } else if (today > eventDate) {
-                                updatedActivity = "Completed";
-                            }
-                        }
-
                         const row = document.createElement("tr");
                         row.innerHTML = `
                             <td>${event.date}</td>
-                            <td>${event.startTime} - ${event.endTime}</td>
+                            <td>${event.startTime === "TBD" || event.endTime === "TBD" ? "TBD" : `${event.startTime} - ${event.endTime}`}</td>
                             <td>${event.location}</td>
                             <td class="${event.recruitment === "Open" ? "status-open" : "status-closed"}">
                                 ${event.recruitment}
                             </td>
-                            <td class="activity-${updatedActivity.toLowerCase().replace(" ", "-")}">
-                                ${updatedActivity}
+                            <td class="activity-${event.activity.toLowerCase().replace(" ", "-")}">
+                                ${event.activity}
                             </td>
                         `;
                         tableBody.appendChild(row);
@@ -132,7 +119,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Ori Status Board</h1>
+        <h1>FL049 Cadet Orientation Ride Schedule</h1>
         <table>
             <thead>
                 <tr>
