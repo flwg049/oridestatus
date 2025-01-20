@@ -9,10 +9,10 @@
             font-family: Arial, sans-serif;
             margin: 20px;
             padding: 20px;
-            background-color: #ffffff;
+            background-color: #f9f9f9;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
@@ -37,9 +37,6 @@
             background-color: #007bff;
             color: white;
         }
-        .form-container {
-            margin-top: 20px;
-        }
         input, select {
             padding: 10px;
             margin: 5px 0;
@@ -48,8 +45,9 @@
             border-radius: 5px;
             font-size: 16px;
         }
-        .add-btn {
-            padding: 10px;
+        .add-btn, .save-btn {
+            padding: 10px 20px;
+            margin-top: 10px;
             background-color: #28a745;
             color: white;
             border: none;
@@ -57,26 +55,17 @@
             cursor: pointer;
             font-size: 16px;
         }
-        .add-btn:hover {
+        .add-btn:hover, .save-btn:hover {
             background-color: #218838;
         }
-        .action-btn {
+        .delete-btn {
             padding: 5px 10px;
-            margin: 2px;
+            background-color: #dc3545;
+            color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-        }
-        .edit-btn {
-            background-color: #ffc107;
-            color: white;
-        }
-        .delete-btn {
-            background-color: #dc3545;
-            color: white;
-        }
-        .edit-btn:hover {
-            background-color: #e0a800;
+            font-size: 14px;
         }
         .delete-btn:hover {
             background-color: #c82333;
@@ -102,13 +91,15 @@
 
         function addEvent() {
             const date = document.getElementById("eventDate").value;
+            const startTime = document.getElementById("startTime").value;
+            const endTime = document.getElementById("endTime").value;
             const location = document.getElementById("eventLocation").value.trim();
             const recruitment = document.getElementById("recruitmentStatus").value;
             const activity = document.getElementById("activityStatus").value;
 
-            if (date && location) {
+            if (date && location && startTime && endTime) {
                 const eventRef = ref(database, "oridestatus");
-                push(eventRef, { date, location, recruitment, activity })
+                push(eventRef, { date, startTime, endTime, location, recruitment, activity })
                     .then(() => {
                         alert("Event added successfully!");
                         document.getElementById("addEventForm").reset();
@@ -131,8 +122,10 @@
                     Object.entries(data).forEach(([key, event]) => {
                         const row = document.createElement("tr");
                         row.innerHTML = `
-                            <td>${event.date}</td>
-                            <td>${event.location}</td>
+                            <td><input type="date" value="${event.date}" id="date-${key}"></td>
+                            <td><input type="time" value="${event.startTime}" id="startTime-${key}"></td>
+                            <td><input type="time" value="${event.endTime}" id="endTime-${key}"></td>
+                            <td><input type="text" value="${event.location}" id="location-${key}"></td>
                             <td>
                                 <select id="recruitment-${key}">
                                     <option value="Open" ${event.recruitment === "Open" ? "selected" : ""}>Open</option>
@@ -148,23 +141,28 @@
                                 </select>
                             </td>
                             <td>
-                                <button class="action-btn edit-btn" onclick="editEvent('${key}')">Edit</button>
-                                <button class="action-btn delete-btn" onclick="deleteEvent('${key}')">Delete</button>
+                                <button class="save-btn" onclick="saveEvent('${key}')">Save</button>
+                                <button class="delete-btn" onclick="deleteEvent('${key}')">Delete</button>
                             </td>
                         `;
                         tableBody.appendChild(row);
                     });
                 } else {
-                    tableBody.innerHTML = "<tr><td colspan='5'>No events available</td></tr>";
+                    tableBody.innerHTML = "<tr><td colspan='7'>No events available</td></tr>";
                 }
             });
         }
 
-        function editEvent(key) {
+        function saveEvent(key) {
+            const date = document.getElementById(`date-${key}`).value;
+            const startTime = document.getElementById(`startTime-${key}`).value;
+            const endTime = document.getElementById(`endTime-${key}`).value;
+            const location = document.getElementById(`location-${key}`).value;
             const recruitment = document.getElementById(`recruitment-${key}`).value;
             const activity = document.getElementById(`activity-${key}`).value;
+
             const eventRef = ref(database, `oridestatus/${key}`);
-            update(eventRef, { recruitment, activity })
+            update(eventRef, { date, startTime, endTime, location, recruitment, activity })
                 .then(() => alert("Event updated successfully!"))
                 .catch((error) => alert("Failed to update event: " + error.message));
         }
@@ -179,7 +177,7 @@
         }
 
         window.addEvent = addEvent;
-        window.editEvent = editEvent;
+        window.saveEvent = saveEvent;
         window.deleteEvent = deleteEvent;
         window.onload = loadEvents;
     </script>
@@ -187,8 +185,10 @@
 <body>
     <div class="container">
         <h1>Oride Admin - Control Board</h1>
-        <form id="addEventForm" class="form-container">
+        <form id="addEventForm">
             <input type="date" id="eventDate" required />
+            <input type="time" id="startTime" required />
+            <input type="time" id="endTime" required />
             <input type="text" id="eventLocation" placeholder="Enter Location" required />
             <select id="recruitmentStatus">
                 <option value="Open">Open</option>
@@ -206,6 +206,8 @@
             <thead>
                 <tr>
                     <th>Date</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
                     <th>Location</th>
                     <th>Recruitment</th>
                     <th>Activity</th>
